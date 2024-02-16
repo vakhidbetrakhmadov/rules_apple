@@ -46,6 +46,12 @@ You can get a list of devices by running 'xcrun devicectl list devices`.
 """,
         default = "",
     ),
+    "no_library_evolution": struct(
+        doc = """
+Disables library evolution and prevents the emission of .swiftinterface files.
+""",
+        default = False,
+    ),
 }
 
 _BUILD_SETTING_LABELS = {

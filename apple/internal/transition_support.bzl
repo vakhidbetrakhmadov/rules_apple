@@ -249,6 +249,7 @@ def _command_line_options(
     default_platforms = [settings[_CPU_TO_DEFAULT_PLATFORM_FLAG[cpu]]] if _is_bazel_7 else []
     return {
         build_settings_labels.use_tree_artifacts_outputs: force_bundle_outputs if force_bundle_outputs else settings[build_settings_labels.use_tree_artifacts_outputs],
+        build_settings_labels.no_library_evolution: settings[build_settings_labels.no_library_evolution],
         "//command_line_option:apple configuration distinguisher": "applebin_" + platform_type,
         "//command_line_option:apple_platform_type": platform_type,
         "//command_line_option:apple_platforms": apple_platforms,
@@ -361,7 +362,10 @@ def _command_line_options_for_xcframework_platform(
                     environment = target_environment,
                     platform_type = platform_type,
                 ): _command_line_options(
-                    emit_swiftinterface = True,
+                    emit_swiftinterface = _should_emit_swiftinterface(
+                        settings,
+                        is_xcframework = True,
+                    ),
                     environment_arch = resolved_environment_arch,
                     minimum_os_version = minimum_os_version,
                     platform_type = platform_type,
@@ -372,11 +376,28 @@ def _command_line_options_for_xcframework_platform(
 
     return output_dictionary
 
+def _should_emit_swiftinterface(settings, is_xcframework = False):
+    """Determines if a .swiftinterface file should be generated for Swift dependencies.
+
+    By providing the option to disable the emission of these files, it allows consumers to opt out
+    of library evolution features, offering flexibility in how Swift dependencies are integrated and managed.
+    """
+
+    # Do not emit swiftinterface file when library evolution is disabled for a given build
+    if settings[build_settings_labels.no_library_evolution]:
+        return False
+
+    # For iOS and tvOS static frameworks, it's historically been required for the underlying swift_library targets
+    # to generate a Swift interface file, though this is primarily for legacy support. `swiftmodule` files may
+    # be used as an alternative. The introduction of a private attribute `_emitswiftinterface` within these
+    # rules allows for selective configuration of Swift build settings across the build graph.
+    return is_xcframework or hasattr(attr, "_emitswiftinterface")
+
 def _apple_rule_base_transition_impl(settings, attr):
     """Rule transition for Apple rules using Bazel CPUs and a valid Apple split transition."""
     platform_type = attr.platform_type
     return _command_line_options(
-        emit_swiftinterface = hasattr(attr, "_emitswiftinterface"),
+        emit_swiftinterface = _should_emit_swiftinterface(settings),
         environment_arch = _environment_archs(platform_type, settings)[0],
         minimum_os_version = attr.minimum_os_version,
         platform_type = platform_type,
@@ -389,6 +410,7 @@ def _apple_rule_base_transition_impl(settings, attr):
 # - https://github.com/bazelbuild/bazel/blob/master/src/main/java/com/google/devtools/build/lib/rules/cpp/CppOptions.java
 _apple_rule_common_transition_inputs = [
     build_settings_labels.use_tree_artifacts_outputs,
+    build_settings_labels.no_library_evolution,
     "//command_line_option:apple_crosstool_top",
 ] + _CPU_TO_DEFAULT_PLATFORM_FLAG.values()
 _apple_rule_base_transition_inputs = _apple_rule_common_transition_inputs + [
@@ -407,6 +429,7 @@ _apple_platform_transition_inputs = _apple_platforms_rule_base_transition_inputs
 ]
 _apple_rule_base_transition_outputs = [
     build_settings_labels.use_tree_artifacts_outputs,
+    build_settings_labels.no_library_evolution,
     "//command_line_option:apple configuration distinguisher",
     "//command_line_option:apple_platform_type",
     "//command_line_option:apple_platforms",
@@ -447,7 +470,7 @@ def _apple_platforms_rule_base_transition_impl(settings, attr):
         environment_arch = _environment_archs(platform_type, settings)[0]
     return _command_line_options(
         apple_platforms = settings["//command_line_option:apple_platforms"],
-        emit_swiftinterface = hasattr(attr, "_emitswiftinterface"),
+        emit_swiftinterface = _should_emit_swiftinterface(settings),
         environment_arch = environment_arch,
         minimum_os_version = minimum_os_version,
         platform_type = platform_type,
@@ -470,7 +493,7 @@ def _apple_platforms_rule_bundle_output_base_transition_impl(settings, attr):
         environment_arch = _environment_archs(platform_type, settings)[0]
     return _command_line_options(
         apple_platforms = settings["//command_line_option:apple_platforms"],
-        emit_swiftinterface = hasattr(attr, "_emitswiftinterface"),
+        emit_swiftinterface = _should_emit_swiftinterface(settings),
         environment_arch = environment_arch,
         force_bundle_outputs = True,
         minimum_os_version = minimum_os_version,
@@ -547,10 +570,7 @@ def _apple_platform_split_transition_impl(settings, attr):
     output_dictionary = {}
     invalid_requested_archs = []
 
-    # iOS and tvOS static frameworks require underlying swift_library targets generate a Swift
-    # interface file. These rules define a private attribute called `_emitswiftinterface` that
-    # let's this transition flip rules_swift config down the build graph.
-    emit_swiftinterface = hasattr(attr, "_emitswiftinterface")
+    emit_swiftinterface = _should_emit_swiftinterface(settings)
 
     if settings["//command_line_option:incompatible_enable_apple_toolchain_resolution"]:
         platforms = (
