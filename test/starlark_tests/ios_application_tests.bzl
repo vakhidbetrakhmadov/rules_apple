@@ -396,6 +396,7 @@ def ios_application_test_suite(name):
             "application-identifier": "FOOBARBAZ1.*",
             "get-task-allow": "true",
             "test-an-entitlement": "false",
+            "com.apple.developer.pass-type-identifiers": "\"Array { FOOBARBAZ1.* }\"",
         },
         tags = [name],
     )
