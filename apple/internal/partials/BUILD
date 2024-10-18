@@ -60,6 +60,7 @@ bzl_library(
         "@bazel_skylib//lib:partial",
         "@bazel_skylib//lib:shell",
         "@build_bazel_apple_support//lib:apple_support",
+        "//apple/internal/providers:apple_symbols_file_info",
     ],
 )
 
