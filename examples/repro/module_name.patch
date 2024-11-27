@@ -1,0 +1,12 @@
+diff --git a/examples/repro/Foo.xcdatamodeld/Foo.xcdatamodel/contents b/examples/repro/Foo.xcdatamodeld/Foo.xcdatamodel/contents
+index 6f29abd2..f3c5cec3 100644
+--- a/examples/repro/Foo.xcdatamodeld/Foo.xcdatamodel/contents
++++ b/examples/repro/Foo.xcdatamodeld/Foo.xcdatamodel/contents
+@@ -1,5 +1,5 @@
+ <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+ <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22758" systemVersion="23G93" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+-    <entity name="Foo" representedClassName=".DBFoo" syncable="YES" codeGenerationType="class">
++    <entity name="Foo" representedClassName="Foo.DBFoo" syncable="YES" codeGenerationType="class">
+     </entity>
+ </model>
+\ No newline at end of file
