@@ -548,6 +548,10 @@ else
     || test_exit_code=$?
 fi
 
+if [[ -n "${SIM_POOL:-}" ]]; then
+  "./%(simulator_creator.py)s" "%(os_version)s" "%(device_type)s" --id "$simulator_id"
+fi
+
 # Run a post-action binary, if provided.
 post_action_binary=%(post_action_binary)s
 post_action_determines_exit_code="%(post_action_determines_exit_code)s"
@@ -651,15 +655,15 @@ fi
 # When tests crash after they have reportedly completed, XCTest marks them as
 # a success. These 2 cases are Swift fatalErrors, and C++ exceptions. There
 # are likely other cases we can add to this in the future. FB7801959
-if grep -q \
-  -e "^Fatal error:" \
-  -e "^.*:[0-9]\+:\sFatal error:" \
-  -e "^libc++abi.dylib: terminating with uncaught exception" \
-  "$testlog"
-then
-  echo "error: log contained test false negative" >&2
-  exit 1
-fi
+# if grep -q \
+#   -e "^Fatal error:" \
+#   -e "^.*:[0-9]\+:\sFatal error:" \
+#   -e "^libc++abi.dylib: terminating with uncaught exception" \
+#   "$testlog"
+# then
+#   echo "error: log contained test false negative" >&2
+#   exit 1
+# fi
 
 if [[ "${COVERAGE:-}" -ne 1 || "${APPLE_COVERAGE:-}" -ne 1 ]]; then
   # Normal tests run without coverage

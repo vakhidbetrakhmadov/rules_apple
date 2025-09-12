@@ -22,6 +22,8 @@ import sys
 import time
 from typing import List, Optional
 
+import tempfile
+import os
 
 def _simctl(extra_args: List[str]) -> str:
     return subprocess.check_output(["xcrun", "simctl"] + extra_args).decode()
@@ -94,6 +96,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "device_type", help="The iOS device to run the tests on, ex: iPhone X"
     )
     parser.add_argument(
+        "--id",
+        required=False,
+        default=None,
+        help="TODO",
+    )
+    parser.add_argument(
         "--name",
         required=False,
         default=None,
@@ -108,7 +116,42 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _main(os_version: str, device_type: str, name: Optional[str], reuse_simulator: bool) -> None:
+def _main(os_version: str, device_type: str, id: Optional[str], name: Optional[str], reuse_simulator: bool) -> None:
+    sim_pool_path = os.getenv("SIM_POOL")
+
+    if sim_pool_path:
+        try:
+            with open(sim_pool_path, "r", encoding="utf-8") as f:
+                sim_pool = json.load(f)
+                if not isinstance(sim_pool, list):
+                    sim_pool = []
+        except (FileNotFoundError, json.JSONDecodeError):
+            sim_pool = []
+
+        if id:
+            sim_pool.append(id)
+
+            with open(sim_pool_path, "w", encoding="utf-8") as f:
+                json.dump(sim_pool, f, indent=2, ensure_ascii=False)
+
+            return
+
+        if sim_pool:
+            simulator_id = sim_pool.pop()
+
+            with open(sim_pool_path, "w", encoding="utf-8") as f:
+                json.dump(sim_pool, f, indent=2, ensure_ascii=False)
+
+            _boot_simulator(simulator_id.strip())
+            print(simulator_id.strip())
+            return
+
+    if sim_pool_path:
+        class ShouldNeverHappen(Exception):
+            pass
+
+        raise ShouldNeverHappen("This should never happen!!!")
+
     devices = json.loads(_simctl(["list", "devices", "-j"]))["devices"]
     device_name = name or _device_name(device_type, os_version)
     runtime_identifier = "com.apple.CoreSimulator.SimRuntime.iOS-{}".format(
@@ -151,4 +194,4 @@ def _main(os_version: str, device_type: str, name: Optional[str], reuse_simulato
 
 if __name__ == "__main__":
     args = _build_parser().parse_args()
-    _main(args.os_version, args.device_type, args.name, args.reuse_simulator)
+    _main(args.os_version, args.device_type, args.id, args.name, args.reuse_simulator)

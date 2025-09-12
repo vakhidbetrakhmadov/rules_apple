@@ -280,6 +280,10 @@ cmd=("%(testrunner_binary)s"
   "${custom_xctestrunner_args[@]}")
 "${cmd[@]}" 2>&1 || test_exit_code=$?
 
+if [[ -n "${SIM_POOL:-}" ]]; then
+  "./%(simulator_creator)s" "%(os_version)s" "%(device_type)s" --id "$id"
+fi
+
 # Run a post-action binary, if provided.
 post_action_binary=%(post_action_binary)s
 post_action_determines_exit_code="%(post_action_determines_exit_code)s"
