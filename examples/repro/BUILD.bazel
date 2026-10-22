@@ -1,0 +1,47 @@
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("//apple:apple.bzl", "apple_static_xcframework")
+load("//apple:resources.bzl", "apple_resource_bundle")
+
+apple_resource_bundle(
+    name = "FooBundle",
+    resources = ["Foo.metal"],
+    tags = ["manual"],
+)
+
+objc_library(
+    name = "FooLib",
+    srcs = ["Foo.m"],
+    hdrs = ["Foo.h"],
+    data = [":FooBundle"],
+    tags = ["manual"],
+)
+
+apple_static_xcframework(
+    name = "FooDevice",
+    ios = {"device": ["arm64"]},
+    minimum_os_versions = {"ios": "15.0"},
+    public_hdrs = ["Foo.h"],
+    tags = ["manual"],
+    deps = [":FooLib"],
+)
+
+apple_static_xcframework(
+    name = "FooSimulator",
+    ios = {"simulator": ["arm64"]},
+    minimum_os_versions = {"ios": "15.0"},
+    public_hdrs = ["Foo.h"],
+    tags = ["manual"],
+    deps = [":FooLib"],
+)
+
+apple_static_xcframework(
+    name = "Foo",
+    ios = {
+        "device": ["arm64"],
+        "simulator": ["arm64"],
+    },
+    minimum_os_versions = {"ios": "15.0"},
+    public_hdrs = ["Foo.h"],
+    tags = ["manual"],
+    deps = [":FooLib"],
+)
