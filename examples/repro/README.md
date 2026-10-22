@@ -8,10 +8,11 @@ This branch is based on the unpatched rules_apple 5.3.1 release.
 Dependency graph:
 
 ```text
-apple_static_xcframework (Foo) -> objc_library (FooLib) -> apple_resource_bundle (FooBundle)
+apple_static_xcframework (Foo) -> swift_library (FooLib) -> apple_resource_bundle (FooBundle)
 ```
 
-`FooBundle` contains the Metal shader `Foo.metal`.
+`FooBundle` contains the Metal shader `Foo.metal`. The Swift library uses
+`module_name = "Foo"` to match `bundle_name = "Foo"` on the XCFramework targets.
 
 From the repository root, run each command separately:
 

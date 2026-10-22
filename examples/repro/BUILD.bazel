@@ -1,4 +1,4 @@
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@rules_swift//swift:swift.bzl", "swift_library")
 load("//apple:apple.bzl", "apple_static_xcframework")
 load("//apple:resources.bzl", "apple_resource_bundle")
 
@@ -8,40 +8,40 @@ apple_resource_bundle(
     tags = ["manual"],
 )
 
-objc_library(
+swift_library(
     name = "FooLib",
-    srcs = ["Foo.m"],
-    hdrs = ["Foo.h"],
+    srcs = ["Foo.swift"],
     data = [":FooBundle"],
+    module_name = "Foo",
     tags = ["manual"],
 )
 
 apple_static_xcframework(
     name = "FooDevice",
+    bundle_name = "Foo",
     ios = {"device": ["arm64"]},
     minimum_os_versions = {"ios": "15.0"},
-    public_hdrs = ["Foo.h"],
     tags = ["manual"],
     deps = [":FooLib"],
 )
 
 apple_static_xcframework(
     name = "FooSimulator",
+    bundle_name = "Foo",
     ios = {"simulator": ["arm64"]},
     minimum_os_versions = {"ios": "15.0"},
-    public_hdrs = ["Foo.h"],
     tags = ["manual"],
     deps = [":FooLib"],
 )
 
 apple_static_xcframework(
     name = "Foo",
+    bundle_name = "Foo",
     ios = {
         "device": ["arm64"],
         "simulator": ["arm64"],
     },
     minimum_os_versions = {"ios": "15.0"},
-    public_hdrs = ["Foo.h"],
     tags = ["manual"],
     deps = [":FooLib"],
 )
