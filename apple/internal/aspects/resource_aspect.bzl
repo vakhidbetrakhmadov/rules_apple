@@ -395,6 +395,7 @@ def _apple_resource_aspect_impl(target, ctx):
             providers = inherited_apple_resource_infos,
         )
         apple_resource_infos.append(resources.nest_in_bundle(
+            default_swift_module = bucketize_args.get("swift_module"),
             provider_to_nest = merged_inherited_provider,
             nesting_bundle_dir = bundle_name,
         ))

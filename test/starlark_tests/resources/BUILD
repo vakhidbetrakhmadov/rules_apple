@@ -1613,3 +1613,36 @@ swift_library(
     module_name = "ResourceModel",
     tags = common.fixture_tags,
 )
+
+# Groups can be nested without changing the module selected by the enclosing bundle.
+apple_resource_group(
+    name = "resource_bundle_swift_module_group",
+    resources = [
+        "//test/testdata/resources:storyboard_ios.storyboard",
+        "//test/testdata/resources:unversioned_datamodel",
+        "//test/testdata/resources:view_ios.xib",
+    ],
+    tags = common.fixture_tags,
+)
+
+apple_resource_group(
+    name = "resource_bundle_swift_module_nested_group",
+    resources = [":resource_bundle_swift_module_group"],
+    tags = common.fixture_tags,
+)
+
+apple_resource_bundle(
+    name = "grouped_resource_bundle_with_swift_module",
+    bundle_name = "GroupedResourceModelBundle",
+    resources = [":resource_bundle_swift_module_nested_group"],
+    swift_module = "ResourceModel",
+    tags = common.fixture_tags,
+)
+
+swift_library(
+    name = "grouped_resource_bundle_swift_module_lib",
+    srcs = ["Common.swift"],
+    data = [":grouped_resource_bundle_with_swift_module"],
+    module_name = "GroupedResourceConsumer",
+    tags = common.fixture_tags,
+)

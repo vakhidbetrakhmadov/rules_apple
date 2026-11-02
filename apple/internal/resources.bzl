@@ -747,7 +747,7 @@ def _minimize(*, bucket):
         for k, r in resources_by_key.items()
     ]
 
-def _nest_in_bundle(*, provider_to_nest, nesting_bundle_dir):
+def _nest_in_bundle(*, provider_to_nest, nesting_bundle_dir, default_swift_module = None):
     """Nests resources in a AppleResourceInfo provider under a new parent bundle directory.
 
     This method is mostly used by rules that create resource bundles in order to nest other resource
@@ -761,13 +761,23 @@ def _nest_in_bundle(*, provider_to_nest, nesting_bundle_dir):
     Args:
         provider_to_nest: A AppleResourceInfo provider with the resources to nest.
         nesting_bundle_dir: The new bundle directory under which to bundle the resources.
+        default_swift_module: The Swift module to use for module-sensitive resources that have no
+            module assigned and do not already belong to a nested resource bundle.
 
     Returns:
         A new AppleResourceInfo provider with the resources nested under nesting_bundle_dir.
     """
     nested_provider_fields = {}
     for field in _populated_resource_fields(provider_to_nest):
+        field_action = PROVIDER_TO_FIELD_ACTION.get(field)
+        requires_swift_module = field_action and field_action[1]
         for parent_dir, swift_module, files in getattr(provider_to_nest, field):
+            # Groups inherit this bundle's module, while libraries and nested bundles keep theirs.
+            if (default_swift_module and
+                requires_swift_module and
+                not swift_module and
+                not any([part.endswith(".bundle") for part in (parent_dir or "").split("/")])):
+                swift_module = default_swift_module
             if parent_dir:
                 nested_parent_dir = paths.join(nesting_bundle_dir, parent_dir)
             else:

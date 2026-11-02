@@ -535,7 +535,7 @@ A list of minimized tuples.
 <pre>
 load("@rules_apple//apple:resources.bzl", "resources_common")
 
-resources_common.nest_in_bundle(*, <a href="#resources_common.nest_in_bundle-provider_to_nest">provider_to_nest</a>, <a href="#resources_common.nest_in_bundle-nesting_bundle_dir">nesting_bundle_dir</a>)
+resources_common.nest_in_bundle(*, <a href="#resources_common.nest_in_bundle-provider_to_nest">provider_to_nest</a>, <a href="#resources_common.nest_in_bundle-nesting_bundle_dir">nesting_bundle_dir</a>, <a href="#resources_common.nest_in_bundle-default_swift_module">default_swift_module</a>)
 </pre>
 
 Nests resources in a AppleResourceInfo provider under a new parent bundle directory.
@@ -556,6 +556,7 @@ nesting_bundle_dir argument.
 | :------------- | :------------- | :------------- |
 | <a id="resources_common.nest_in_bundle-provider_to_nest"></a>provider_to_nest |  A AppleResourceInfo provider with the resources to nest.   |  none |
 | <a id="resources_common.nest_in_bundle-nesting_bundle_dir"></a>nesting_bundle_dir |  The new bundle directory under which to bundle the resources.   |  none |
+| <a id="resources_common.nest_in_bundle-default_swift_module"></a>default_swift_module |  The Swift module to use for module-sensitive resources that have no module assigned and do not already belong to a nested resource bundle.   |  `None` |
 
 **RETURNS**
 
