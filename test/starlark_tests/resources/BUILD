@@ -1646,3 +1646,53 @@ swift_library(
     module_name = "GroupedResourceConsumer",
     tags = common.fixture_tags,
 )
+
+# Groups select a module without introducing a resource bundle directory.
+apple_resource_group(
+    name = "resource_group_with_swift_module",
+    resources = [
+        "//test/testdata/resources:storyboard_ios.storyboard",
+        "//test/testdata/resources:unversioned_datamodel",
+        "//test/testdata/resources:view_ios.xib",
+    ],
+    swift_module = "ResourceModel",
+    tags = common.fixture_tags,
+)
+
+apple_resource_group(
+    name = "nested_resource_group_with_swift_module",
+    resources = [":resource_bundle_swift_module_nested_group"],
+    swift_module = "ResourceModel",
+    tags = common.fixture_tags,
+)
+
+apple_resource_group(
+    name = "parent_resource_group_with_swift_module",
+    resources = [":resource_group_with_swift_module"],
+    swift_module = "ParentModule",
+    tags = common.fixture_tags,
+)
+
+swift_library(
+    name = "resource_group_swift_module_lib",
+    srcs = ["Common.swift"],
+    data = [":resource_group_with_swift_module"],
+    module_name = "DirectGroupConsumer",
+    tags = common.fixture_tags,
+)
+
+swift_library(
+    name = "nested_resource_group_swift_module_lib",
+    srcs = ["Common.swift"],
+    data = [":nested_resource_group_with_swift_module"],
+    module_name = "NestedGroupConsumer",
+    tags = common.fixture_tags,
+)
+
+swift_library(
+    name = "parent_resource_group_swift_module_lib",
+    srcs = ["Common.swift"],
+    data = [":parent_resource_group_with_swift_module"],
+    module_name = "ParentGroupConsumer",
+    tags = common.fixture_tags,
+)

@@ -176,7 +176,8 @@ library targets through the `data` attribute.
 <pre>
 load("@rules_apple//apple:resources.bzl", "apple_resource_group")
 
-apple_resource_group(<a href="#apple_resource_group-name">name</a>, <a href="#apple_resource_group-resources">resources</a>, <a href="#apple_resource_group-strip_structured_resources_prefixes">strip_structured_resources_prefixes</a>, <a href="#apple_resource_group-structured_resources">structured_resources</a>)
+apple_resource_group(<a href="#apple_resource_group-name">name</a>, <a href="#apple_resource_group-resources">resources</a>, <a href="#apple_resource_group-strip_structured_resources_prefixes">strip_structured_resources_prefixes</a>, <a href="#apple_resource_group-structured_resources">structured_resources</a>,
+                     <a href="#apple_resource_group-swift_module">swift_module</a>)
 </pre>
 
 This rule encapsulates a target which provides resources to dependents. An
@@ -195,6 +196,7 @@ to library targets through the `data` attribute, or to other
 | <a id="apple_resource_group-resources"></a>resources |  Files to include in the final bundle that depends on this target. Files that are processable resources, like .xib, .storyboard, .strings, .png, and others, will be processed by the Apple bundling rules that have those files as dependencies. Other file types that are not processed will be copied verbatim. These files are placed in the root of the final bundle (e.g. Payload/foo.app/...) in most cases. However, if they appear to be localized (i.e. are contained in a directory called *.lproj), they will be placed in a directory of the same name in the app bundle.<br><br>You can also add apple_resource_bundle and apple_bundle_import targets into `resources`, and the resource bundle structures will be propagated into the final bundle.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
 | <a id="apple_resource_group-strip_structured_resources_prefixes"></a>strip_structured_resources_prefixes |  A list of prefixes to strip from the paths of structured resources. For each structured resource, if the path starts with one of these prefixes, the first matching prefix will be removed from the path when the resource is placed in the bundle root. This is useful for removing intermediate directories from the resource paths.<br><br>For example, if `structured_resources` contains `["intermediate/res/foo.png"]`, and `strip_structured_resources_prefixes` contains `["intermediate"]`, `res/foo.png` will end up inside the bundle.   | List of strings | optional |  `[]`  |
 | <a id="apple_resource_group-structured_resources"></a>structured_resources |  Files to include in the final application bundle. They are not processed or compiled in any way besides the processing done by the rules that actually generate them. These files are placed in the bundle root in the same structure passed to this argument, so `["res/foo.png"]` will end up in `res/foo.png` inside the bundle.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="apple_resource_group-swift_module"></a>swift_module |  The Swift module name to use when compiling resources such as Core Data models and Interface Builder files. Also applies to resources inherited from child groups that have no module assigned. Existing module assignments and nested resource bundles are preserved. If omitted, resources without an assigned module use the Swift module of the consuming Apple bundle.   | String | optional |  `""`  |
 
 
 <a id="apple_core_ml_library"></a>
@@ -479,7 +481,8 @@ resources_common.deduplicate(*, <a href="#resources_common.deduplicate-resources
 <pre>
 load("@rules_apple//apple:resources.bzl", "resources_common")
 
-resources_common.merge_providers(*, <a href="#resources_common.merge_providers-default_owner">default_owner</a>, <a href="#resources_common.merge_providers-providers">providers</a>, <a href="#resources_common.merge_providers-validate_all_resources_owned">validate_all_resources_owned</a>)
+resources_common.merge_providers(*, <a href="#resources_common.merge_providers-default_owner">default_owner</a>, <a href="#resources_common.merge_providers-default_swift_module">default_swift_module</a>, <a href="#resources_common.merge_providers-providers">providers</a>,
+                                 <a href="#resources_common.merge_providers-validate_all_resources_owned">validate_all_resources_owned</a>)
 </pre>
 
 Merges multiple AppleResourceInfo providers into one.
@@ -490,6 +493,7 @@ Merges multiple AppleResourceInfo providers into one.
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="resources_common.merge_providers-default_owner"></a>default_owner |  The default owner to be used for resources which have a None value in the `owners` dictionary. May be None, in which case no owner is marked.   |  `None` |
+| <a id="resources_common.merge_providers-default_swift_module"></a>default_swift_module |  The Swift module to use for module-sensitive resources that have no module assigned and do not already belong to a nested resource bundle.   |  `None` |
 | <a id="resources_common.merge_providers-providers"></a>providers |  The list of providers to merge. This method will fail unless there is at least 1 provider in the list.   |  none |
 | <a id="resources_common.merge_providers-validate_all_resources_owned"></a>validate_all_resources_owned |  Whether to validate that all resources are owned. This is useful for top-level rules to ensure that the resources in AppleResourceInfo that they are propagating are fully owned. If default_owner is set, this attribute does nothing, as by definition the resources will all have a default owner.   |  `False` |
 

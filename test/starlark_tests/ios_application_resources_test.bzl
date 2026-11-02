@@ -89,6 +89,38 @@ def ios_application_resources_test_suite(name):
             tags = [name],
         )
 
+    # Group modules apply to direct and inherited files, with explicit child modules preserved.
+    for resource_prefix in ["", "nested_", "parent_"]:
+        for consumer in ["app", "unit_test"]:
+            target_name = "{}_with_{}resource_group_swift_module".format(consumer, resource_prefix)
+            analysis_target_name = target_name
+            if consumer == "unit_test":
+                analysis_target_name += ".__internal__.__test_bundle"
+            for resource_type, mnemonic in [
+                ("model", "MomCompile"),
+                ("storyboard", "StoryboardCompile"),
+                ("xib", "XibCompile"),
+            ]:
+                analysis_target_actions_test(
+                    name = "{}_{}resource_group_swift_module_{}_{}_test".format(name, resource_prefix, consumer, resource_type),
+                    target_under_test = "//test/starlark_tests/targets_under_test/ios:" + analysis_target_name,
+                    target_mnemonic = mnemonic,
+                    expected_argv = ["--module ResourceModel"],
+                    tags = [name],
+                )
+            archive_contents_test(
+                name = "{}_{}resource_group_swift_module_{}_compiled_model_test".format(name, resource_prefix, consumer),
+                build_type = "simulator",
+                target_under_test = "//test/starlark_tests/targets_under_test/ios:" + target_name,
+                contains = [
+                    "$BUNDLE_ROOT/storyboard_ios.storyboardc/",
+                    "$BUNDLE_ROOT/view_ios.nib",
+                ],
+                text_test_file = "$BUNDLE_ROOT/unversioned_datamodel.mom",
+                text_test_values = ["ResourceModel.Entity"],
+                tags = [name],
+            )
+
     # Tests that various nonlocalized resource types are bundled correctly with
     # the application (at the top-level, rather than inside an .lproj directory).
     archive_contents_test(

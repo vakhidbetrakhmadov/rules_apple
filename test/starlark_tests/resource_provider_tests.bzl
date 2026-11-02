@@ -24,7 +24,7 @@ load(
     "resources",
 )
 
-def _nest_in_bundle_swift_module_test_impl(ctx):
+def _resource_provider_swift_module_test_impl(ctx):
     env = unittest.begin(ctx)
     files = depset(["resource"])
 
@@ -50,25 +50,39 @@ def _nest_in_bundle_swift_module_test_impl(ctx):
         unowned_resources = depset(),
         **buckets
     )
-    nested = resources.nest_in_bundle(
-        default_swift_module = ctx.attr.swift_module or None,
-        nesting_bundle_dir = "Outer.bundle",
-        provider_to_nest = provider,
-    )
+    if ctx.attr.operation == "merge":
+        updated_provider = resources.merge_providers(
+            default_swift_module = ctx.attr.swift_module or None,
+            providers = [provider],
+        )
+    else:
+        updated_provider = resources.nest_in_bundle(
+            default_swift_module = ctx.attr.swift_module or None,
+            nesting_bundle_dir = "Outer.bundle",
+            provider_to_nest = provider,
+        )
     for field in ["datamodels", "storyboards", "xibs"]:
-        actual = getattr(nested, field)
+        actual = getattr(updated_provider, field)
         for index, (parent_dir, module, expected_module) in enumerate(cases):
-            expected_parent = "Outer.bundle/" + parent_dir if parent_dir else "Outer.bundle"
+            expected_parent = parent_dir
+            if ctx.attr.operation == "nest":
+                expected_parent = "Outer.bundle/" + parent_dir if parent_dir else "Outer.bundle"
             asserts.equals(env, expected_parent, actual[index][0])
             asserts.equals(env, expected_module if ctx.attr.swift_module else module, actual[index][1])
-            asserts.equals(env, files, actual[index][2])
+            asserts.equals(env, files.to_list(), actual[index][2].to_list())
     for field in ["strings", "processed"]:
-        asserts.equals(env, [("Outer.bundle", None, files)], getattr(nested, field))
+        actual = getattr(updated_provider, field)
+        asserts.equals(env, "Outer.bundle" if ctx.attr.operation == "nest" else None, actual[0][0])
+        asserts.equals(env, None, actual[0][1])
+        asserts.equals(env, files.to_list(), actual[0][2].to_list())
     return unittest.end(env)
 
-_nest_in_bundle_swift_module_test = unittest.make(
-    _nest_in_bundle_swift_module_test_impl,
-    attrs = {"swift_module": attr.string()},
+_resource_provider_swift_module_test = unittest.make(
+    _resource_provider_swift_module_test_impl,
+    attrs = {
+        "operation": attr.string(default = "nest", values = ["nest", "merge"]),
+        "swift_module": attr.string(),
+    },
 )
 
 def resource_provider_test_suite(name):
@@ -77,16 +91,27 @@ def resource_provider_test_suite(name):
     Args:
         name: The name of the test suite.
     """
-    _nest_in_bundle_swift_module_test(
+    _resource_provider_swift_module_test(
         name = name + "_nest_in_bundle_swift_module_test",
         swift_module = "ResourceModel",
     )
-    _nest_in_bundle_swift_module_test(
+    _resource_provider_swift_module_test(
         name = name + "_nest_in_bundle_without_swift_module_test",
+    )
+    _resource_provider_swift_module_test(
+        name = name + "_merge_swift_module_test",
+        operation = "merge",
+        swift_module = "ResourceModel",
+    )
+    _resource_provider_swift_module_test(
+        name = name + "_merge_without_swift_module_test",
+        operation = "merge",
     )
     native.test_suite(
         name = name,
         tests = [
+            name + "_merge_swift_module_test",
+            name + "_merge_without_swift_module_test",
             name + "_nest_in_bundle_swift_module_test",
             name + "_nest_in_bundle_without_swift_module_test",
         ],

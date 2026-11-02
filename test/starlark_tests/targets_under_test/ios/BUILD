@@ -7555,3 +7555,63 @@ ios_unit_test(
     tags = common.fixture_tags,
     deps = ["//test/starlark_tests/resources:grouped_resource_bundle_swift_module_lib"],
 )
+
+ios_application(
+    name = "app_with_resource_group_swift_module",
+    bundle_id = "com.google.example.resource-group-model",
+    families = ["iphone"],
+    infoplists = ["//test/starlark_tests/resources:Info.plist"],
+    minimum_os_version = common.min_os_ios.baseline,
+    tags = common.fixture_tags,
+    deps = [
+        "//test/starlark_tests/resources:objc_main_lib",
+        "//test/starlark_tests/resources:resource_group_swift_module_lib",
+    ],
+)
+
+ios_unit_test(
+    name = "unit_test_with_resource_group_swift_module",
+    minimum_os_version = common.min_os_ios.baseline,
+    tags = common.fixture_tags,
+    deps = ["//test/starlark_tests/resources:resource_group_swift_module_lib"],
+)
+
+ios_application(
+    name = "app_with_nested_resource_group_swift_module",
+    bundle_id = "com.google.example.nested-resource-group-model",
+    families = ["iphone"],
+    infoplists = ["//test/starlark_tests/resources:Info.plist"],
+    minimum_os_version = common.min_os_ios.baseline,
+    tags = common.fixture_tags,
+    deps = [
+        "//test/starlark_tests/resources:nested_resource_group_swift_module_lib",
+        "//test/starlark_tests/resources:objc_main_lib",
+    ],
+)
+
+ios_unit_test(
+    name = "unit_test_with_nested_resource_group_swift_module",
+    minimum_os_version = common.min_os_ios.baseline,
+    tags = common.fixture_tags,
+    deps = ["//test/starlark_tests/resources:nested_resource_group_swift_module_lib"],
+)
+
+ios_application(
+    name = "app_with_parent_resource_group_swift_module",
+    bundle_id = "com.google.example.parent-resource-group-model",
+    families = ["iphone"],
+    infoplists = ["//test/starlark_tests/resources:Info.plist"],
+    minimum_os_version = common.min_os_ios.baseline,
+    tags = common.fixture_tags,
+    deps = [
+        "//test/starlark_tests/resources:objc_main_lib",
+        "//test/starlark_tests/resources:parent_resource_group_swift_module_lib",
+    ],
+)
+
+ios_unit_test(
+    name = "unit_test_with_parent_resource_group_swift_module",
+    minimum_os_version = common.min_os_ios.baseline,
+    tags = common.fixture_tags,
+    deps = ["//test/starlark_tests/resources:parent_resource_group_swift_module_lib"],
+)

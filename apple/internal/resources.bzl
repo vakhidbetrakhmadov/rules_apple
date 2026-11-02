@@ -626,12 +626,19 @@ def _collect(*, attr, res_attrs = [], split_attr_keys = []):
 
     return files_by_target
 
-def _merge_providers(*, default_owner = None, providers, validate_all_resources_owned = False):
+def _merge_providers(
+        *,
+        default_owner = None,
+        default_swift_module = None,
+        providers,
+        validate_all_resources_owned = False):
     """Merges multiple AppleResourceInfo providers into one.
 
     Args:
         default_owner: The default owner to be used for resources which have a None value in the
             `owners` dictionary. May be None, in which case no owner is marked.
+        default_swift_module: The Swift module to use for module-sensitive resources that have no
+            module assigned and do not already belong to a nested resource bundle.
         providers: The list of providers to merge. This method will fail unless there is at least 1
             provider in the list.
         validate_all_resources_owned: Whether to validate that all resources are owned. This is
@@ -648,9 +655,9 @@ def _merge_providers(*, default_owner = None, providers, validate_all_resources_
             "likely a bug in rules_apple, please file a bug with reproduction steps.",
         )
 
-    if not default_owner and validate_all_resources_owned == False and len(providers) == 1:
-        # Short path to avoid the merging and validation loops if the loop won't change the owners
-        # mapping nor validate that all resources are marked as owned.
+    if (not default_owner and not default_swift_module and
+        validate_all_resources_owned == False and len(providers) == 1):
+        # Reuse the provider when no ownership, module, or validation changes are needed.
         return providers[0]
 
     buckets = {}
@@ -660,10 +667,21 @@ def _merge_providers(*, default_owner = None, providers, validate_all_resources_
         # which are not desireable for our use case.
         fields = _populated_resource_fields(provider)
         for field in fields:
+            field_resources = getattr(provider, field)
+            if default_swift_module:
+                field_resources = [
+                    (parent_dir, _swift_module_with_default(
+                        default_swift_module = default_swift_module,
+                        field = field,
+                        parent_dir = parent_dir,
+                        swift_module = swift_module,
+                    ), files)
+                    for parent_dir, swift_module, files in field_resources
+                ]
             buckets.setdefault(
                 field,
                 [],
-            ).extend(getattr(provider, field))
+            ).extend(field_resources)
 
     # unowned_resources is a depset of resource paths.
     unowned_resources = depset(transitive = [provider.unowned_resources for provider in providers])
@@ -747,6 +765,16 @@ def _minimize(*, bucket):
         for k, r in resources_by_key.items()
     ]
 
+def _swift_module_with_default(*, default_swift_module, field, parent_dir, swift_module):
+    """Applies module defaults while preserving explicit modules and nested bundles."""
+    field_action = PROVIDER_TO_FIELD_ACTION.get(field)
+    if (default_swift_module and
+        field_action and field_action[1] and
+        not swift_module and
+        not any([part.endswith(".bundle") for part in (parent_dir or "").split("/")])):
+        return default_swift_module
+    return swift_module
+
 def _nest_in_bundle(*, provider_to_nest, nesting_bundle_dir, default_swift_module = None):
     """Nests resources in a AppleResourceInfo provider under a new parent bundle directory.
 
@@ -769,15 +797,13 @@ def _nest_in_bundle(*, provider_to_nest, nesting_bundle_dir, default_swift_modul
     """
     nested_provider_fields = {}
     for field in _populated_resource_fields(provider_to_nest):
-        field_action = PROVIDER_TO_FIELD_ACTION.get(field)
-        requires_swift_module = field_action and field_action[1]
         for parent_dir, swift_module, files in getattr(provider_to_nest, field):
-            # Groups inherit this bundle's module, while libraries and nested bundles keep theirs.
-            if (default_swift_module and
-                requires_swift_module and
-                not swift_module and
-                not any([part.endswith(".bundle") for part in (parent_dir or "").split("/")])):
-                swift_module = default_swift_module
+            swift_module = _swift_module_with_default(
+                default_swift_module = default_swift_module,
+                field = field,
+                parent_dir = parent_dir,
+                swift_module = swift_module,
+            )
             if parent_dir:
                 nested_parent_dir = paths.join(nesting_bundle_dir, parent_dir)
             else:

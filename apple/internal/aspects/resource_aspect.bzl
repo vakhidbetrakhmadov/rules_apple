@@ -107,6 +107,7 @@ def _apple_resource_aspect_impl(target, ctx):
 
     apple_resource_infos = []
     bucketize_args = {}
+    group_swift_module = None
 
     # TODO(b/174858377) Follow up to see if we need to define output_discriminator for process_args
     # if an input from the aspect context indicates that the Apple resource aspect is being sent
@@ -200,6 +201,8 @@ def _apple_resource_aspect_impl(target, ctx):
 
     elif ctx.rule.kind == "apple_resource_group":
         default_action = apple_resource_hint_action.resources
+        group_swift_module = ctx.rule.attr.swift_module or None
+        bucketize_args["swift_module"] = group_swift_module
         collect_args["res_attrs"] = ["resources"]
         collect_structured_args["res_attrs"] = ["structured_resources"]
 
@@ -408,6 +411,7 @@ def _apple_resource_aspect_impl(target, ctx):
         providers.append(
             resources.merge_providers(
                 default_owner = owner,
+                default_swift_module = group_swift_module,
                 providers = apple_resource_infos,
             ),
         )
