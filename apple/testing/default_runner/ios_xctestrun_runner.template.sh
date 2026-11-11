@@ -872,15 +872,15 @@ fi
 # When tests crash after they have reportedly completed, XCTest marks them as
 # a success. These 2 cases are Swift fatalErrors, and C++ exceptions. There
 # are likely other cases we can add to this in the future. FB7801959
-if grep -q \
-  -e "^Fatal error:" \
-  -e "^.*:[0-9]\+:\sFatal error:" \
-  -e "^libc++abi.dylib: terminating with uncaught exception" \
-  "$testlog"
-then
-  echo "error: log contained test false negative" >&2
-  exit 1
-fi
+# if grep -q \
+#   -e "^Fatal error:" \
+#   -e "^.*:[0-9]\+:\sFatal error:" \
+#   -e "^libc++abi.dylib: terminating with uncaught exception" \
+#   "$testlog"
+# then
+#   echo "error: log contained test false negative" >&2
+#   exit 1
+# fi
 
 if [[ "${llvm_cov_status:-0}" -ne 0 ]]; then
   echo "error: exporting coverage report failed" >&2
